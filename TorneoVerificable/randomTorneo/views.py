@@ -198,7 +198,11 @@ class Verificar(APIView):
     @staticmethod
     def get(request):
         pulseid = request.GET['id_pulso']
+        datos_iniciales=request.GET['datos_iniciales']
         idsequipos = []
+
+        for key in datos_iniciales:
+            idsequipos.append(datos_iniciales[key])
 
         equipos = run_lotteryid(pulseid, idsequipos)
         res = ordenar(equipos)
