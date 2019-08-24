@@ -37,10 +37,17 @@ class Torneo(APIView):
     # obtener listado de puertas
     @staticmethod
     def get(request):
-        
-        return Response("Henloget", status=200)
+    	idTorneo = request.query_params.get('id')
+    	print("id torneo es:" + idTorneo)
+    	torneo= get_or_none(Torneos,id=idTorneo)
+    	print("id torneo es:" + idTorneo)
+    	response={"nombre": torneo.nombre, "max_equipos": torneo.max_equipos, "descripcion": torneo.descripcion, "timestamp": torneo.timestamp, "id_pulso":torneo.id_pulso}
+    	if torneo is not None:
+    		return Response(response, status=200)
+    	else:
+    		return Response("Equipo no existe uwu", 400)	
 
-    # Abrir una puerta
+   
     @staticmethod
     def post(request):
         return Response("Henlopost", status=200)        
@@ -71,3 +78,10 @@ class Sortear(APIView):
     @staticmethod
     def post(request):
         return Response("Henlopost", status=200)              
+
+
+def get_or_none(classmodel, **kwargs):
+    try:
+        return classmodel.objects.get(**kwargs)
+    except classmodel.DoesNotExist:
+        return None        
