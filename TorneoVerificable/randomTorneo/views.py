@@ -16,11 +16,6 @@ from randomTorneo.models import Torneos, Equipos
 class Generar(APIView):
 
     @staticmethod
-    def get(request):
-        # no hace nada
-        return Response("Henloget", status=200)
-
-    @staticmethod
     def post(request):
         nombre = request.data.get('nombre')
         nEquipos = request.data.get('nEquipos')
@@ -36,64 +31,38 @@ class Generar(APIView):
             return Response(idSorteo, status=200)
         return Response("Error en la data", status=400)
     
-    @staticmethod
-    def get(request):
-        #no hace nada
-        return Response("Henloget", status=200)
-
-    
-    @staticmethod
-    def post(request):
-        nombre = request.data.get('nombre')
-        nEquipos= request.data.get('nEquipos')
-        descripcion= request.data.get('descripcion')
-        fechaSorteo= request.data.get('fechaSorteo')
-
-        if not None in [nombre, nEquipos, descripcion, fechaSorteo]:
-            #generar torneo en la base de datos
-            torneo= Torneos(nombre = nombre, max_equipos = nEquipos, descripcion = descripcion, timestamp = fechaSorteo , id_pulso = -1)
-            torneo.save()
-            idSorteo= torneo.id
-            return Response(idSorteo, status=200)
-        return Response("Error en la data", status=400)
 
 class Torneo(APIView):
     # obtener listado de puertas
     @staticmethod
     def get(request):
-    	idTorneo = request.query_params.get('id')
-    	print("id torneo es:" + idTorneo)
-    	torneo= get_or_none(Torneos,id=idTorneo)
-    	print("id torneo es:" + idTorneo)
-    	response={"nombre": torneo.nombre, "max_equipos": torneo.max_equipos, "descripcion": torneo.descripcion, "timestamp": torneo.timestamp, "id_pulso":torneo.id_pulso}
-    	if torneo is not None:
-    		return Response(response, status=200)
-    	else:
-    		return Response("Equipo no existe uwu", 400)	
+        idTorneo = request.query_params.get('id')
+        print("id torneo es:" + idTorneo)
+        torneo= get_or_none(Torneos, id=idTorneo)
+        if torneo is not None:
+            response={"nombre": torneo.nombre, "max_equipos": torneo.max_equipos, "descripcion": torneo.descripcion, "timestamp": torneo.timestamp, "id_pulso":torneo.id_pulso}
+            return Response(response, status=200)
+        else:
+            return Response("Equipo no existe uwu", 400)	
 
    
-    @staticmethod
-    def post(request):
-        return Response("Henlopost", status=200)        
+      
 
 
 
 class Inscribir(APIView):
-    # obtener listado de puertas
-    @staticmethod
-    def get(request):
-        return Response("Henloget", status=200)
 
-    # Abrir una puerta
     @staticmethod
     def post(request):
         id_torneo = request.data.get('id_torneo')
         nombre_equipo = request.data.get('nombre_equipo')
-        torneo=Torneos.objects.filter(id=id_torneo)[0]
-        equipo = Equipos(nombre=nombre_equipo, id_torneo=torneo, id_grupo=-1)
-        equipo.save()
-        return Response(equipo.id, status=200)
-
+        if not None in [id_torneo, nombre_equipo]:
+            torneo=Torneos.objects.filter(id=id_torneo)[0]
+            if torneo != []:
+                equipo = Equipos(nombre=nombre_equipo, id_torneo=torneo, id_grupo=-1)
+                equipo.save()
+                return Response(equipo.id, status=200)
+        return Response("Error en la data", status=400)        
 
 # API URL
 beacon_url = "https://random.uchile.cl/beacon/2.0/pulse/time/"
@@ -171,66 +140,82 @@ def ordenar(equipos):
 
 
 class Sortear(APIView):
-    @staticmethod
-    def get(request):
-        
-        return Response("Henloget", status=200)
 
     @staticmethod
     def post(request):
         print(request.POST)
         idtorneo = request.data.get('id')
+        if idtorneo is not None:
+            torneo = Torneos.objects.get(id=idtorneo)
+            timestamp = str(torneo.timestamp)
+            id_pulso, seed = get_pulse(timestamp)
+            torneo.id_pulso = id_pulso
+            torneo.save()
+
+            equipos = Equipos.objects.filter(id_torneo=idtorneo)
+            idsequipos = []
+            idsfinal = []
+            for e in equipos:
+                idsequipos.append(e.id)
+                idsfinal.append(e.id)
+
+            grupos = run_lottery(timestamp, idsequipos)
+
+            for i in range(len(grupos)):
+                eq = Equipos.objects.get(id=grupos[i])
+                eq.id_grupo = i%4
+                eq.save()
+
+            res = ordenar(grupos)
 
 
-        torneo = Torneos.objects.get(id=idtorneo)
-        timestamp = str(torneo.timestamp)
-        id_pulso, seed = get_pulse(timestamp)
-        torneo.id_pulso = id_pulso
-        torneo.save()
+            return Response({"equipos" : res, "id_pulso" : id_pulso, "datos_iniciales" : idsfinal}, status=200)
+        return Response("Error en la data", status=400)
 
-        equipos = Equipos.objects.filter(id_torneo=idtorneo)
-        idsequipos = []
-        idsfinal = []
-        for e in equipos:
-            idsequipos.append(e.id)
-            idsfinal.append(e.id)
-
-        grupos = run_lottery(timestamp, idsequipos)
-
-        for i in range(len(grupos)):
-            eq = Equipos.objects.get(id=grupos[i])
-            eq.id_grupo = i%4
-            eq.save()
-
-        res = ordenar(grupos)
-
-
-        return Response({"equipos" : res, "id_pulso" : id_pulso, "datos_iniciales" : idsfinal}, status=200)
 
 class Verificar(APIView):
     @staticmethod
     def get(request):
         pulseid = request.GET['id_pulso']
         datos_iniciales=request.GET['datos_iniciales']
-        idsequipos = json.loads(datos_iniciales)
+        if not None in [pulseid, datos_iniciales]:
+            idsequipos = json.loads(datos_iniciales)
+            equipos = run_lotteryid(pulseid, idsequipos)
+            res = ordenar(equipos)
 
-        #for key in datos_iniciales:
-         #   idsequipos.append(datos_iniciales[key])
-
-        equipos = run_lotteryid(pulseid, idsequipos)
-        res = ordenar(equipos)
-
-
-        return Response(res, status=200)
-
-    @staticmethod
-    def post(request):
-        return Response("Henlopost", status=200)
-
-
+            return Response(res, status=200)
+        return Response("Error en la data", status=400)
 
 def get_or_none(classmodel, **kwargs):
     try:
         return classmodel.objects.get(**kwargs)
     except classmodel.DoesNotExist:
         return None
+
+
+class Grupos(APIView):
+    @staticmethod
+    def get(request):
+        idtorneo = request.query_params.get('id')
+        if idtorneo is not None:
+            torneo = Torneos.objects.get(id=idtorneo)
+            timestamp = str(torneo.timestamp)
+
+            equipos = Equipos.objects.filter(id_torneo=idtorneo)
+            idsequipos = []
+          
+            for e in equipos:
+                idsequipos.append(e.id)
+             
+
+            grupos = run_lottery(timestamp, idsequipos)
+
+                
+
+            res = ordenar(grupos)
+
+
+            return Response({"equipos" : res}, status=200)
+        return Response("Error en la data", status=400)
+
+
