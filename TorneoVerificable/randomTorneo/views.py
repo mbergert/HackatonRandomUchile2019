@@ -13,7 +13,6 @@ from rest_framework.views import APIView
 from randomTorneo.models import Torneos, Equipos
 
 class Generar(APIView):
-<<<<<<< HEAD
 
     @staticmethod
     def get(request):
@@ -35,7 +34,6 @@ class Generar(APIView):
             idSorteo = torneo.id
             return Response(idSorteo, status=200)
         return Response("Error en la data", status=400)
-=======
     
     @staticmethod
     def get(request):
@@ -57,7 +55,6 @@ class Generar(APIView):
     		idSorteo= torneo.id
     		return Response(idSorteo, status=200)
     	return Response("Error en la data", status=400)
->>>>>>> 5dbf73f6fe9662764c9a82500390c5fe1db358cd
 
 class Torneo(APIView):
     # obtener listado de puertas
