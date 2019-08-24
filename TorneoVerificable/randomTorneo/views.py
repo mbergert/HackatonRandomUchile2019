@@ -192,7 +192,7 @@ class Sortear(APIView):
         res = ordenar(grupos)
 
 
-        return Response(id_pulso, res, status=200)
+        return Response(res, id_pulso, idsequipos, status=200)
 
 class Verificar(APIView):
     @staticmethod
