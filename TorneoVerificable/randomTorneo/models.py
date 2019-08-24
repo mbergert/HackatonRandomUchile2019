@@ -6,7 +6,7 @@ class Torneos(models.Model):
     descripcion = models.CharField(max_length=300)
     timestamp = models.BigIntegerField()
     id_pulso = models.BigIntegerField()
-    listo = models.BooleanField()
+    listo = models.BooleanField(default=False)
 
     def getEquipos(self):
     	return Equipos.objects.get(id_torneo=self.id)
