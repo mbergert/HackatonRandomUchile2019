@@ -157,7 +157,7 @@ def ordenar(equipos):
 
     res = [[], [], [], []]
     for e in equipos:
-        res[e.id_grupo] += [e.id, e.nombre]
+        res[e.id_grupo].append([e.id, e.nombre])
     return res
 
 
@@ -177,22 +177,22 @@ class Sortear(APIView):
         torneo.id_pulso = id_pulso
         torneo.save()
 
-        equipos = Equipos.object.filter(id_torneo=idtorneo)
+        equipos = Equipos.objects.filter(id_torneo=idtorneo)
         idsequipos = []
         for e in equipos:
-            idsequipos += [e.id]
+            idsequipos.append(e.id)
 
         grupos = run_lottery(timestamp, idsequipos)
 
         for i in range(len(grupos)):
-            eq = Equipos.object.get(id=grupos[i])
+            eq = Equipos.objects.get(id=grupos[i])
             eq.id_grupo = i%4
             eq.save()
 
         res = ordenar(grupos)
 
 
-        return Response(res, id_pulso, idsequipos, status=200)
+        return Response({"equipos" : res, "id_pulso" : id_pulso, "datos_iniciales" : idsequipos}, status=200)
 
 class Verificar(APIView):
     @staticmethod
