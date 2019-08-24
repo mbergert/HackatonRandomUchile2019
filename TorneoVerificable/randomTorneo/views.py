@@ -8,24 +8,28 @@ from rest_framework.response import Response
 import hashlib
 
 from rest_framework.views import APIView
-
+from randomTorneo.models import Torneos, Equipos
 
 class Generar(APIView):
-    # obtener listado de puertas
+    
     @staticmethod
     def get(request):
-        
+        #no hace nada
         return Response("Henloget", status=200)
 
-    # Abrir una puerta
+    
     @staticmethod
     def post(request):
     	nombre = request.data.get('nombre')
     	nEquipos= request.data.get('nEquipos')
     	descripcion= request.data.get('descripcion')
     	fechaSorteo= request.data.get('fechaSorteo')
+
     	if not None in [nombre, nEquipos, descripcion, fechaSorteo]:
-    		idSorteo= "id"
+    		#generar torneo en la base de datos
+    		torneo= Torneos(nombre = nombre, max_equipos = nEquipos, descripcion = descripcion, timestamp = fechaSorteo , id_pulso = -1)
+    		torneo.save()
+    		idSorteo= torneo.id
     		return Response(idSorteo, status=200)
     	return Response("Error en la data", status=400)
 
