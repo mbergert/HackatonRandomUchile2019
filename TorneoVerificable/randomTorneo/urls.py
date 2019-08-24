@@ -10,6 +10,7 @@ urlpatterns = (
     path('inscribir', views.Inscribir.as_view(), name='Inscribir Equipo'),
 	path('sortear', views.Sortear.as_view(), name='Sortear'),
     path('verificar', views.Verificar.as_view(), name='Verificar'),
-    path('grupos', views.Grupos.as_view(), name='Grupos')
+    path('grupos', views.Grupos.as_view(), name='Grupos'),
+    path('verequipos', views.VerEquipos.as_view(), name='Ver Equipos')
 
 )

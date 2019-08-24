@@ -219,3 +219,20 @@ class Grupos(APIView):
         return Response("Error en la data", status=400)
 
 
+class VerEquipos(APIView):
+    @staticmethod
+    def get(request):
+        idtorneo = request.query_params.get('id')
+        if idtorneo is not None:
+            torneo = get_or_none(Torneos, id=idtorneo) 
+            if torneo is not None:
+                equipos= Equipos.objects.filter(id_torneo=idtorneo)
+                res1=[]
+                for elem in equipos:
+                    print(elem)
+                    res1.append(elem.nombre)
+                #res= json.dumps(res1)
+
+                return Response(res1, status=200)
+        return Response("No hay equipo uwu", status=400)
+
