@@ -8,6 +8,7 @@ import requests
 import hashlib
 import random
 from randomTorneo.models import Torneos, Equipos
+import json
 
 from rest_framework.views import APIView
 from randomTorneo.models import Torneos, Equipos
@@ -161,8 +162,10 @@ def run_lotteryid(pulse_index, idsequipos):
 def ordenar(equipos):
 
     res = [[], [], [], []]
-    for e in equipos:
-        res[e.id_grupo].append([e.id, e.nombre])
+    for i in range(len(equipos)):
+        eqp = equipos[i]
+        e = Equipos.objects.get(id=eqp)
+        res[i%4].append([e.id, e.nombre])
     return res
 
 
@@ -175,7 +178,10 @@ class Sortear(APIView):
 
     @staticmethod
     def post(request):
-        idtorneo = request.POST['id']
+        print(request.POST)
+        idtorneo = request.data.get('id')
+
+
         torneo = Torneos.objects.get(id=idtorneo)
         timestamp = str(torneo.timestamp)
         id_pulso, seed = get_pulse(timestamp)
@@ -184,8 +190,10 @@ class Sortear(APIView):
 
         equipos = Equipos.objects.filter(id_torneo=idtorneo)
         idsequipos = []
+        idsfinal = []
         for e in equipos:
             idsequipos.append(e.id)
+            idsfinal.append(e.id)
 
         grupos = run_lottery(timestamp, idsequipos)
 
@@ -197,17 +205,17 @@ class Sortear(APIView):
         res = ordenar(grupos)
 
 
-        return Response({"equipos" : res, "id_pulso" : id_pulso, "datos_iniciales" : idsequipos}, status=200)
+        return Response({"equipos" : res, "id_pulso" : id_pulso, "datos_iniciales" : idsfinal}, status=200)
 
 class Verificar(APIView):
     @staticmethod
     def get(request):
         pulseid = request.GET['id_pulso']
         datos_iniciales=request.GET['datos_iniciales']
-        idsequipos = []
+        idsequipos = json.loads(datos_iniciales)
 
-        for key in datos_iniciales:
-            idsequipos.append(datos_iniciales[key])
+        #for key in datos_iniciales:
+         #   idsequipos.append(datos_iniciales[key])
 
         equipos = run_lotteryid(pulseid, idsequipos)
         res = ordenar(equipos)
